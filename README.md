@@ -60,7 +60,12 @@ pod 'ISRefreshControl', '~> 1.3.0'
 
 ### Without CocoaPods 
 
-add files under `ISRefreshControl/` to your project.
+- install [ISMethodSwizzling](https://github.com/ishkawa/ISMethodSwizzling).
+- add files under `ISRefreshControl/` to your project.
+
+## Change log
+
+see [CHANGELOG.md](https://github.com/ishkawa/ISRefreshControl/blob/master/CHANGELOG.md).
 
 ## License
 
