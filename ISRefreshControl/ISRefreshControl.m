@@ -2,6 +2,7 @@
 #import "ISGumView.h"
 #import "ISScalingActivityIndicatorView.h"
 #import "ISMethodSwizzling.h"
+#import "UIColor+ISRefreshControl.h"
 #import <objc/runtime.h>
 
 typedef NS_ENUM(NSInteger, ISRefreshingState) {
@@ -19,6 +20,7 @@ static CGFloat const ISThreshold = 115.f;
 @property (nonatomic) CGFloat offset;
 @property (nonatomic) ISRefreshingState refreshingState;
 @property (nonatomic, strong) ISGumView *gumView;
+@property (nonatomic, strong) UILabel *label;
 @property (nonatomic, strong) ISScalingActivityIndicatorView *indicatorView;
 
 @end
@@ -70,10 +72,21 @@ static CGFloat const ISThreshold = 115.f;
     self.gumView = [[ISGumView alloc] init];
     [self addSubview:self.gumView];
     
+    self.label = [[UILabel alloc] init];
+    self.label.backgroundColor = [UIColor clearColor];
+    self.label.textAlignment = UITextAlignmentCenter;
+    self.label.textColor = [UIColor is_refreshControlColor];
+    self.label.font = [UIFont boldSystemFontOfSize:10.f];
+    self.label.shadowOffset = CGSizeMake(0.f, .5f);
+    self.label.shadowColor = [UIColor colorWithWhite:0.f alpha:.2f];
+    self.label.text = @"text";
+    [self addSubview:self.label];
+    
     self.indicatorView = [[ISScalingActivityIndicatorView alloc] init];
     [self addSubview:self.indicatorView];
     
     [self addObserver:self forKeyPath:@"tintColor" options:0 context:NULL];
+    [self addObserver:self forKeyPath:@"attributedTitle" options:0 context:NULL];
     
     UIColor *tintColor = [[ISRefreshControl appearance] tintColor];
     if (tintColor) {
@@ -84,6 +97,7 @@ static CGFloat const ISThreshold = 115.f;
 - (void)dealloc
 {
     [self removeObserver:self forKeyPath:@"tintColor"];
+    [self removeObserver:self forKeyPath:@"attributedTitle"];
 }
 
 #pragma mark -
@@ -98,8 +112,16 @@ static CGFloat const ISThreshold = 115.f;
 - (void)layoutSubviews
 {
     CGFloat width = self.frame.size.width;
-    self.gumView.frame = CGRectMake(width/2.f-15, 25-15, 35, 90);
-    self.indicatorView.frame = CGRectMake(width/2.f-15, 25-15, 30, 30);
+    
+    if ([self.attributedTitle length]) {
+        self.gumView.frame = CGRectMake(width/2.f-15, 25-15 - 10, 35, 90);
+        self.indicatorView.frame = CGRectMake(width/2.f-15, 25-15 - 10, 30, 30);
+        self.label.frame = CGRectMake(0.f, self.frame.size.height - 20.f, self.frame.size.width, 20.f);
+    } else {
+        self.gumView.frame = CGRectMake(width/2.f-15, 25-15, 35, 90);
+        self.indicatorView.frame = CGRectMake(width/2.f-15, 25-15, 30, 30);
+        self.label.frame = CGRectZero;
+    }
 }
 
 - (void)willMoveToSuperview:(UIView *)newSuperview
@@ -151,6 +173,12 @@ static CGFloat const ISThreshold = 115.f;
         return;
     }
     
+    if (object == self && [keyPath isEqualToString:@"attributedTitle"]) {
+        self.label.text = [self.attributedTitle string];
+        [self setNeedsLayout];
+        return;
+    }
+    
     [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 }
 
@@ -169,6 +197,7 @@ static CGFloat const ISThreshold = 115.f;
         return;
     }
     self.gumView.distance = self.offset < -ISAdditionalTopInset ? -self.offset-ISAdditionalTopInset : 0.f;
+    self.label.frame = CGRectMake(0.f, self.frame.size.height - 20.f + self.gumView.distance, self.frame.size.width, 20.f);
 }
 
 - (void)updateGumViewVisible

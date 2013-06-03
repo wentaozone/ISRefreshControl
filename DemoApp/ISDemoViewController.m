@@ -14,6 +14,8 @@
     label.textAlignment = UITextAlignmentCenter;
     self.tableView.tableHeaderView = label;
     
+    self.refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:@"Attributed String"];
+    
     [self.refreshControl addTarget:self
                             action:@selector(refresh)
                   forControlEvents:UIControlEventValueChanged];
